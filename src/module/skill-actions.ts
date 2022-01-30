@@ -5,10 +5,6 @@ import { ActionsIndex } from './actions-index';
 import { Flag } from './utils';
 import { ModifierPF2e } from './pf2e';
 
-interface SkillActionOptions {
-  includeMap: boolean;
-}
-
 interface RollOption {
   label: string;
   map: number;
@@ -20,13 +16,10 @@ export interface ActorSkillAction {
 
 export default class SkillAction {
   key: string;
-  itemName: string;
   label: string;
   icon: string;
-  modifier: string;
-  enabled: boolean;
-  includeMap: boolean;
-  actor: Actor;
+  proficiencyKey: string;
+  featRequired: true;
 
   constructor(
     key: string,
@@ -35,29 +28,76 @@ export default class SkillAction {
     trainingRequired: boolean,
     icon: string,
     featRequired: boolean,
-    actor: Actor,
-    options: SkillActionOptions = {},
   ) {
-    const skill = actor.data.data.skills[proficiencyKey];
-
     this.key = key;
-    this.itemName = label;
-    this.actor = actor;
-    this.label = game.i18n.localize(skill.label) + ': ' + label;
-    this.modifier = (skill.value >= 0 ? ' +' : ' ') + skill.value;
-    this.enabled =
-      (skill._modifiers[1].modifier > 0 && trainingRequired) ||
-      (!trainingRequired && this.hasFeat(label, featRequired));
+    this.label = label;
+    this.proficiencyKey = proficiencyKey;
     this.icon = 'systems/pf2e/icons/spells/' + icon + '.webp';
-    this.includeMap = options.includeMap;
+    this.featRequired = featRequired;
+  }
+
+  get pf2eItem() {
+    return ActionsIndex.instance.get(this.label);
+  }
+
+  rollOptions(modifier: number): Array<RollOption> {
+    const result = [{ label: `Roll ${modifier}`, map: 0 }];
+    if (this.pf2eItem.data.data.traits.value.includes('attack')) {
+      const map = this.pf2eItem.calculateMap();
+      result.push({ label: game.i18n.format('PF2E.MAPAbbreviationLabel', { penalty: map.map2 }), map: map.map2 });
+      result.push({ label: game.i18n.format('PF2E.MAPAbbreviationLabel', { penalty: map.map3 }), map: map.map3 });
+    }
+    return result;
+  }
+
+  rollModifiers(e) {
+    const modifiers = [];
+    if (!(game instanceof Game)) return modifiers;
+
+    const map = parseInt(e.currentTarget.dataset.map);
+    if (map) {
+      modifiers.push(
+        new ModifierPF2e({
+          label: game.i18n.localize('PF2E.MultipleAttackPenalty'),
+          modifier: map,
+          type: 'untyped',
+        }),
+      );
+    }
+    return modifiers;
+  }
+}
+
+export class SkillActionOwnership {
+  action: SkillAction;
+  actor: Actor;
+
+  constructor(skillAction: skillAction, actor: Actor) {
+    this.action = skillAction;
+    this.actor = actor;
+  }
+
+  get key() {
+    return this.action.key;
+  }
+
+  get label() {
+    return game.i18n.localize(this.skill.label) + ': ' + this.action.label;
+  }
+
+  get skill() {
+    return this.actor.data.data.skills[this.action.proficiencyKey];
+  }
+
+  get enabled() {
+    return (
+      (!this.action.trainingRequired || this.skill._modifiers[1].modifier > 0) &&
+      (!this.action.featRequired || this.hasFeat())
+    );
   }
 
   get visible() {
     return this.actorData?.visible ?? true;
-  }
-
-  get actionItem() {
-    return ActionsIndex.instance.get(this.itemName);
   }
 
   private get actorData(): ActorSkillAction | undefined {
@@ -68,38 +108,18 @@ export default class SkillAction {
     await Flag.set(this.actor, `actions.${this.key}`, data);
   }
 
+  rollOptions() {
+    const modifier = (this.skill.value >= 0 ? ' +' : ' ') + this.skill.value;
+    return this.action.rollOptions(modifier);
+  }
+
   rollSkillAction(e) {
-    if (!(game instanceof Game)) return;
-
-    const modifiers = [];
-    const map = parseInt(e.currentTarget.dataset.map);
-
-    if (map) {
-      modifiers.push(
-        new ModifierPF2e({
-          label: game.i18n.localize('PF2E.MultipleAttackPenalty'),
-          modifier: map,
-          type: 'untyped',
-        }),
-      );
-    }
-
-    game.pf2e.actions[this.key]({ event: e, modifiers });
+    game.pf2e.actions[this.key]({ event: e, modifiers: this.action.rollModifiers(e) });
   }
 
-  rollOptions(): Array<RollOption> {
-    const result = [{ label: `Roll ${this.modifier}`, map: 0 }];
-    if (this.actionItem.data.data.traits.value.includes('attack')) {
-      const map = this.actionItem.calculateMap();
-      result.push({ label: game.i18n.format('PF2E.MAPAbbreviationLabel', { penalty: map.map2 }), map: map.map2 });
-      result.push({ label: game.i18n.format('PF2E.MAPAbbreviationLabel', { penalty: map.map3 }), map: map.map3 });
-    }
-    return result;
-  }
-
-  hasFeat(label: string, featRequired: boolean) {
+  private hasFeat() {
     const items = this.actor.data.items;
-    const result = items.filter((item) => item.data.name === label);
-    return (featRequired === true && result.length > 0) || featRequired === false;
+    const result = items.filter((item) => item.data.name === this.action.label);
+    return result.length > 0;
   }
 }
