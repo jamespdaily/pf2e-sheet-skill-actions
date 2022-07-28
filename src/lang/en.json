@@ -7,6 +7,12 @@
         "hint": "Position in the skill page; Top : right after Strikes, Bottom : At the end",
         "top": "Top",
         "bot": "Bottom"
+      },
+      "IconStyle": {
+        "name": "Icon Style",
+        "hint": "Icon style on the skill; Action Cost Icon: For the actions cost icon, Skill Icon: For the skills icon if it's available",
+        "actionCostIcon": "Action Cost Icon",
+        "skillIcon": "Skill Icon"
       }
     },
     "UnequipAll": {

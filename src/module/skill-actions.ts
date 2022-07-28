@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 
+import { SKILLS_ACTIONS_MODULE_NAME } from './settings';
 import { ActionsIndex } from './actions-index';
 import { camelize, Flag, getGame } from './utils';
 import { ActionType, SKILL_ACTIONS_DATA, SkillActionData, SkillActionDataParameters } from './skill-actions-data';
@@ -26,8 +27,18 @@ export class SkillAction {
   constructor(data: SkillActionDataParameters) {
     data.key ??= camelize(data.slug);
     data.actionType ??= 'A';
-    if (data.icon) data.icon = 'systems/pf2e/icons/spells/' + data.icon + '.webp';
-    else data.icon = 'systems/pf2e/icons/actions/' + ACTION_ICONS[data.actionType] + '.webp';
+    switch (getGame().settings.get(SKILLS_ACTIONS_MODULE_NAME, 'IconStyle')) {
+      case 'actionCostIcon': {
+        data.icon = 'systems/pf2e/icons/actions/' + ACTION_ICONS[data.actionType] + '.webp';
+        data.actionType = ''
+        break;
+      }
+      default: {
+        if (data.icon) data.icon = 'systems/pf2e/icons/spells/' + data.icon + '.webp';
+        else data.icon = 'systems/pf2e/icons/actions/' + ACTION_ICONS[data.actionType] + '.webp';
+        break;
+      }
+    }
     this.data = data;
 
     this.variants = new VariantsCollection();
