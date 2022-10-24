@@ -1,3 +1,9 @@
+### ⚠️ Not compatible with Foundry v10
+
+_PF2e Character Sheet Skill Actions_ is deprecated as of Foundry v10. Its features have been absorbed into [PF2e Workbench](https://github.com/xdy/xdy-pf2e-workbench/), which you should install for continued support.
+
+---
+
 # pf2e-sheet-skill-actions
 
 This will add a number of skill actions to your stikes list to be more easily accessible to the player.
