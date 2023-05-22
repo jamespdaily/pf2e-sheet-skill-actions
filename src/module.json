@@ -12,7 +12,7 @@
     }
   ],
   "minimumCoreVersion": "0.8.9",
-  "compatibleCoreVersion": "9",
+  "compatibleCoreVersion": "10",
   "esmodules": ["module/sheet-skill-actions.js"],
   "languages": [
     {
