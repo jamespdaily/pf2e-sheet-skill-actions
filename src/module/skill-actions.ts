@@ -65,7 +65,7 @@ export class SkillAction {
   }
 
   hasTrait(trait: string) {
-    return this.pf2eItem.data.data.traits.value.includes(trait);
+    return this.pf2eItem.system.traits.value.includes(trait);
   }
 
   getData({ allVisible }: { allVisible: boolean }) {
@@ -167,7 +167,7 @@ export class SkillAction {
   }
 
   private getSkills(proficiencyKey: string) {
-    const skills = this.actor.data.data.skills;
+    const skills = this.actor.system.skills;
     if (proficiencyKey == 'lore') {
       return Object.values(skills).filter((skill) => skill.lore);
     } else {
@@ -188,7 +188,7 @@ export class SkillAction {
         this.variants.addMapVariant(skill, data.extra, -10);
       }
 
-      if (this.actorHasItem('assurance-' + skill.name)) {
+      if (this.actorHasItem('assurance-' + skill.slug)) {
         this.variants.addAssuranceVariant(skill, data.extra);
       }
     });
